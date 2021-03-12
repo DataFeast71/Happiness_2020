@@ -28,6 +28,7 @@ df_pca <- read.csv("Happiness_years_PCA.csv", header = TRUE)
 
 ui <- fluidPage(
   theme = shinytheme("flatly"),
+  tags$head(HTML("<title>Happiness</title>")),
   navbarPage(
     #
     title = div(img(
