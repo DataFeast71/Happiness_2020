@@ -1,0 +1,141 @@
+---
+title: |
+  [1]: https://www.facebook.com/An%C3%A1lisis-y-visualizaci%C3%B3n-de-datos-100602148375744
+  [2]: https://raw.githubusercontent.com/DataFeast71/COVID19_plots/main/img/Logo_W.jpeg {width=1in}
+  [![Analisis Y visualizacion][2]][1]
+  Datos de felicidad en el mundo 2020.
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: null
+    df_print: paged
+    highlight: zenburn
+    theme: cerulean
+    toc: false
+    toc_float: false
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(factoextra)
+library(ggrepel)
+library(plotly)
+```
+
+## Datos
+
+Buscando en la red encontramos datos relacionados a la "felicidad" en distintos países. Un reporte completo lo puedes encontrar en la pagina de [*World Happiness Report*](https://worldhappiness.report/) con los resultados del año 2020 los cuales podemos descargar y analizarlos por nuestra cuenta.
+
+En el reporte podemos ver diferentes mediciones que hacen para determinar la felicidad que tienen los habitantes de cada país como son el expectativa de vida, salud, percepción de la corrupción, calidad democratica etc. Ocupan estas mediciones para comparar a los distintos paises y se observa que uno de los países con mayor calificación de felicidad en su población es Finlandia.
+
+Los datos del año 2020 se pueden encontrar en el archivo `WHR20_DataForFigure2-1.csv`. Las variables que estamos interesados son las siguientes:
+
+* Country name
+* Regional indicator
+* Logged GDP per capita
+* Social Support
+* Healthy life expectancy
+* Freedom to make life choices
+* Generosity
+* Perceptions of corruptions
+
+```{r, message=FALSE, warning=FALSE}
+df_happy <- read.csv("../Data/WHR20_DataForFigure2-1.csv", header = TRUE) %>% 
+  select(Country.name:Ladder.score, Logged.GDP.per.capita:Perceptions.of.corruption) 
+# apply(df_happy, 2, function(x) sum(is.na(x)))
+head(df_happy)
+```
+
+Usaremos el indicador regional como categoría.
+
+```{r}
+df_happy %>% 
+  group_by(Regional.indicator) %>% 
+  tally()
+```
+
+En el reporte correspondiente podemos ver distintas gráficas que se usaron para representar los resultados. En este set de datos tenemos 6 variables númericas distintas. Dado que no podemos mostrar todas las variables por ser tantas dimensiones podemos aplicar el análisis de componentes principales (PCA) para ver la distribución de los países de acuerdo a los distintos parámetros evaluados.
+
+## PCA
+
+Para realizar el PCA tomaremos las 6 variables númericas.
+
+```{r}
+res.pca <- prcomp(df_happy[,c(-1:-3)], scale = TRUE)
+summary(res.pca)
+```
+
+Tomando los primeros dos componentes se representa el 74.42% de la varibilidad por lo que usaremos estos componentes para representarlos en gráficos.
+
+```{r}
+res_pca <- data.frame(res.pca$x) %>% 
+  mutate(Region = df_happy$Regional.indicator,
+         Country = df_happy$Country.name)
+
+res_rotation <- data.frame(res.pca$rotation) %>% 
+  select(PC1, PC2) %>% 
+  rownames_to_column() %>% 
+  rename(Var_type = "rowname") %>% 
+  mutate(PC1 = PC1*5,
+         PC2 = PC2*5) 
+```
+
+Los resultados los preparamos para poderlos representar en una visualización usando `ggplot2`
+
+```{r}
+ggplot(res_pca, aes(x=PC1, y=PC2)) +
+  geom_hline(yintercept = 0, lty=2) +
+  geom_vline(xintercept = 0, lty=2) +
+  geom_point(aes(color =Region),alpha = 0.8, size=2)+
+  guides(color = guide_legend(title="", ncol = 4)) +
+  labs(x = "PC1 (51.65 %)", y ="PC2 (22.77%)") +
+  scale_color_brewer(palette = "Set3") +
+  geom_label(data = filter(res_pca, Country == "Mexico"),
+             aes(label = Country), color = "black", size = 3) +
+  geom_segment(data = res_rotation, aes(x = 0, xend= PC1, y=0, yend=PC2), alpha = 0.3, color= "red", arrow = arrow(length = unit(0.3, "cm"))) +
+  #geom_text(data = res_rotation, aes(x= PC1, y=PC2, label = Var_type), alpha = 0.3) +
+  geom_text_repel(data = res_rotation, aes(x= PC1, y=PC2, label = Var_type), alpha = 0.3) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+Entre los aspectos que podemos observar aqui es que destaca la "polarización" entre la región Africana de Sub-Sahara y las regiones Europeas donde las variables de de ingreso per Capita, salud, y apoyo social son las que más contribuyen a la dispersión de los datos. Dentro de este grupo Africano se encuentra un país del Caribe. Los países del continente asíatico presentan un mayor dispersión entre ellos diferenciandose principalmente en la libertad de la toma de decisiones, salud y percepción de la corrupción. Es interesante observar que los países del Sudoeste asiatico presentan una dispersión y solo uno de ellos se encuentra con los paises con la mejor evaluación de felicidad. 
+
+Mientras que los países del continente Americano parecen tener mismos comportamientos, los países de la region Norte de America son los presenta comportamientos diferentes al resto del contienente (¿desigualdad?) las cuales se ven influenciadas por la percepción de la corrupción.
+
+El contienente Europeo resulta bastante interesante por que algunos países del oeste Europeo forman un grupo los cuales se catalogan con la mejor calificación respecto a "felicidad" pero al mismo tiempo, paises de la misma region y del centro de Europa no tienen el mismo comportamiento y parecen ser que se diferencian más por la percepción de la corrupción y la libertad de decisiones.
+
+Pero para poder aprovechar más la visualización podemos hacerla interactiva y asi saber cual es cada país.
+
+```{r}
+pca_formated <- res_pca %>% 
+  select(PC1, PC2, Country) %>% 
+  left_join(df_happy, by = c("Country" = "Country.name"))
+  
+head(pca_formated)
+```
+
+```{r, message=FALSE, warning=FALSE}
+fig <- plot_ly(pca_formated, x = ~PC1, y = ~PC2, type = 'scatter', mode = 'markers',color = ~Regional.indicator, 
+               colors = "Set3", hoverinfo = 'text', marker = list(size=8),
+               text = ~paste('</br> Country: ', Country,
+                             '</br> Ladder score: ', round(Ladder.score, 2),
+                             '</br> GDP: ', round(Logged.GDP.per.capita,2),
+                             '</br> Social support: ', round(Social.support,2),
+                             '</br> Healthy life expectancy: ', round(Healthy.life.expectancy,2),
+                             '</br> Freedom to make life choices: ', round(Freedom.to.make.life.choices,2),
+                             '</br> Percepcions of corruption: ', round(Perceptions.of.corruption, 2),
+                             '</br> Generosity: ', round(Generosity, 2)
+                             ))
+fig <- fig %>% layout(title = "PCA data from 2020",
+                      legend = list(x = 1.01, y = 0.5))
+fig
+```
+
+El mismo reporte muestra datos de años pasados los cuales exploramos de la misma manera en [aqui]()

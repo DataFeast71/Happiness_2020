@@ -1,0 +1,90 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(cluster)
+library(factoextra)
+library(countrycode)
+```
+
+```{r, message=FALSE, warning=FALSE}
+df_happy <- read.csv("WHR20_DataForTable2-1.csv", header = TRUE) %>% 
+  select(Country.name:Delivery.Quality) %>% 
+  mutate(Continent = countrycode(sourcevar = Country.name,
+                                  origin = 'country.name',destination = 'continent'))
+
+df_clean <- df_happy %>% 
+  na.omit() %>% 
+  mutate(year = factor(year, levels = c(2005:2018)))
+
+head(df_clean)
+```
+
+```{r}
+df_year <- df_clean %>%  filter(year == "2018") %>% 
+  select(-year, -Continent)
+
+rownames(df_year) <- df_year$Country.name
+df_year$Country.name <- NULL
+head(df_year)
+```
+
+## Data preparation
+
+```{r}
+df_year <- scale(df_year)
+```
+
+## K-means 
+
+```{r}
+fviz_nbclust(df_year, kmeans, method = "gap_stat")
+```
+
+```{r}
+km.res <- kmeans(df_year, 3, nstart = 25)
+# Visualize
+fviz_cluster(km.res, data = df_year, palette = "jco",
+             ggtheme = theme_minimal())
+```
+
+
+```{r}
+res.hc <- hclust(dist(df_year), method = "ward.D2")
+fviz_dend(res.hc, cex = 0.5, k = 4, palette = "jco")
+```
+
+```{r}
+library(pheatmap)
+```
+
+```{r}
+pheatmap(t(df_year), cutree_rows = 4)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
