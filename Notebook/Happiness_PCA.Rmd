@@ -31,11 +31,11 @@ library(plotly)
 
 ## Datos
 
-Buscando en la red encontramos datos relacionados a la "felicidad" en distintos países. Un reporte completo lo puedes encontrar en la pagina de [*World Happiness Report*](https://worldhappiness.report/) con los resultados del año 2020 los cuales podemos descargar y analizarlos por nuestra cuenta.
+Buscando en la red encontramos datos relacionados a la "felicidad"  en la pagina [*World Happiness Report*](https://worldhappiness.report/) con los resultados de diferentes años.
 
-En el reporte podemos ver diferentes mediciones que hacen para determinar la felicidad que tienen los habitantes de cada país como son el expectativa de vida, salud, percepción de la corrupción, calidad democratica etc. Ocupan estas mediciones para comparar a los distintos paises y se observa que uno de los países con mayor calificación de felicidad en su población es Finlandia.
+En el reporte podemos ver diferentes mediciones que se toman en cuenta para determinar la felicidad que tienen los habitantes de cada país como son la expectativa de vida, salud, percepción de la corrupción, calidad democrática etc. Con estas mediciones se observa que Finlandia es uno de los países con mayor calificación de felicidad.
 
-¿Pero com ha cambiado los diferentes paramétros que se han medido en los ultimos años? Para responder esto descargamos los datos que estan presensente en el archivo con el nombre `WHR20_DataForTable2-1.csv`. Los datos presentan diferentes paramétros que evaluaron y los que estamos interesados son los siguientes:
+¿Cómo han cambiado los diferentes parámetros que se han medido para cada país en los ultimos años? Para responder esto, utilizamos los datos disponibles en la pagina (los cuales están con el nombre `WHR20_DataForTable2-1.csv`). Estos son los parámetros que se evaluaron.
 
 * Country
 * Year
@@ -52,7 +52,7 @@ En el reporte podemos ver diferentes mediciones que hacen para determinar la fel
 * Democratic Quality
 * Delivery Quality
 
-En estas útimas dos variables se observo que en algunos países no se tenía el valor correspondiente para el año 2019. Hay dos posibles alternativas para este caso. La primera es remover las observaciones del año **2019** pero al hacer esto se perdera la información de este año. La segunda alternativa es imputar los valores faltantes y para hacer esto podemos ocupar los valores del año anterior, 2018, esto con la suposición de que la calidad democratica no es fácil cambiarla en un solo año
+En las últimas dos variables (Democratic Quality y Delivery Quality) se observó que algunos países tenían el valor correspondiente para el año **2019**. Para poder tomar en cuenta estas dos variables en el análisis se imputaron los valores faltantes utilizando los valores del año anterior (2018), esto con la suposición de que la calidad democrática no es fácil cambiarla en un solo año.
 
 ```{r, message=FALSE, warning=FALSE}
 df_happy <- read.csv("../Data/WHR20_DataForTable2-1.csv", header = TRUE) %>% 
@@ -69,7 +69,7 @@ df_clean <- df_happy %>%
 head(df_clean)
 ```
 
-Se han tomado registro de los datos desde el año 2005 sin embargo solo un país estaba incluido en el reporte (Canada), pero a partir del año 2006 se incluyeron los más países hasta el año 2019.
+Se tiene registro de los datos desde el año 2005, sin embargo, solo un país estaba incluido en el reporte (Canadá). A partir del año 2006 se fueron incluyeron más países.
 
 ```{r}
 df_clean %>% 
@@ -77,11 +77,11 @@ df_clean %>%
   tally()
 ```
 
-En el reporte correspondiente podemos ver gráficas de barras con los valores de las distintas variables. En este set de datos tenemos 12 variables númericas distintas. Dado que no podemos mostrar todas las variables por ser tantas dimensiones podemos aplicar el análisis de componentes principales (PCA).
+En el reporte original podemos ver gráficas de barras con los valores de las distintas variables. En este set de datos tenemos 12 variables numéricas distintas, y dado que no podemos mostrar todas als ser varias dimensiones podemos aplicar el análisis de componentes principales (PCA) para este fin. 
 
 ## PCA
 
-Para realizar el PCA tomaremos los datos de **2017** que contienen 128 países los cuales estan distribuidos en los 5 continentes.
+Para realizar el PCA tomaremos como ejemplo los datos de **2017** que contienen 128 países, los cuales están distribuidos en los 5 continentes.
 
 ```{r}
 df_year <- df_clean %>% 
@@ -132,9 +132,10 @@ ggplot(pca_year, aes(x=PC1, y=PC2)) +
   theme_bw()
 ```
 
-Entre los aspectos que podemos observar aqui es que destaca la "polarización" entre el continente Africano y el Europeo donde las variables de de ingreso per Capita, calidad democratica y salud son las que más contribuyen a la dispersión de los datos. Los países del continente asíatico presentan un mayor dispersión entre ellos diferenciandose principalmente en la libertad de la toma de decisiones. Mientras que los países del continente Americano parecen tener mismos comportamientos excepto algunos como Canada que se encuentra junto con los países con mejores resultados. El contienente Europeo resulta bastante interesante por que hay un grupo de países con muy buenas "calificaciones" pero también hay un grupo que presenta valores contrarios en los cuales parece contribuir la percepción de la corrupción.
-
-Pero para poder aprovechar más la visualización podemos hacerla interactiva y asi saber cual es cada país.
+Lo que nos muestra este análisis de PCA es que destaca la “polarización” entre el continente africano y el europeo, donde las variables de ingreso per Capita, calidad democrática y salud son las que más contribuyen a la dispersión de los datos. En el caso de los países del continente asiático, estos presentan una mayor dispersión entre ellos diferenciándose principalmente en la libertad de la toma de decisiones. Para el continente americano tenemos que los países parecen tener un comportamiento similar, excepto Canadá que se encuentra junto con los países con mejores resultado. 
+El continente europeo resulta ser un caso interesante ya que hay un grupo de países con muy buenas “calificaciones” pero también hay un grupo que presenta valores contrarios, en los cuales el principal cambio es la percepción de la corrupción.
+ 
+Para poder ver qué pasa en cada país, podemos aprovechar este gráfico interactivo: 
 
 ```{r}
 # g <- ggplot(pca_year, aes(x=PC1, y=PC2)) +
@@ -211,7 +212,7 @@ write.csv(df_all_formated, "Happiness_years_PCA.csv", row.names = FALSE)
 write.csv(df_rotation, "Happiness_years_PCA_rotation.csv", row.names = FALSE)
 ```
 
-Dado que se tienen los datos de diferentes años podemos ver como han sido los cambios por ejemplor en el parametro *Life Ladder*.
+Dado que se tienen los datos de diferentes años podemos ver cómo han sido los cambios en algún parámetro de interés. Aquí ponemos un ejemplo con el parámetro *Life Ladder*:
 
 ```{r}
 df_clean_y <- df_clean %>% 
@@ -252,6 +253,7 @@ ggplot() +
   ) 
 ```
 
-Al parecer México iba mejorando pero tuvo una caida drastica a comparación de Finlandia pero esperemos que pueda tener un crecimiento positivo en los siguientes años.
+Al parecer México iba mejorando, pero tuvo una caída a partir del año 2013, a comparación de Finlandia. Esperamos que se pueda volver a tener un crecimiento positivo en los siguientes años.
 
-Como podemos ver se puede mucho con los datos pero en un reporte como de este estilo sería muy repetitivo por lo tanto creamos una pequeña app que nos permita explorar lo datos de una manera más dínamica.
+Como podemos ver existen muchos datos y varias maneras de explorarlo. Hacer un reporte para cada año sería muy repetitivo por lo cual creamos una pequeña [app](https://datafeast71.shinyapps.io/Happiness/) que nos permite explorar que ha pasado en algún año de interés. O si gustas ver el analísis con los resultados del último año puedes visitar el [link](https://datafeast71.github.io/Happiness_2020/Happiness_2020.html). 
+
