@@ -29,7 +29,7 @@ library(ggrepel)
 library(plotly)
 ```
 
-## Datos
+## Reporte "Felicidad"
 
 Buscando en la red encontramos datos relacionados a la "felicidad"  en la pagina [*World Happiness Report*](https://worldhappiness.report/) con los resultados de diferentes años.
 
@@ -257,3 +257,18 @@ Al parecer México iba mejorando, pero tuvo una caída a partir del año 2013, a
 
 Como podemos ver existen muchos datos y varias maneras de explorarlo. Hacer un reporte para cada año sería muy repetitivo por lo cual creamos una pequeña [app](https://datafeast71.shinyapps.io/Happiness/) que nos permite explorar que ha pasado en algún año de interés. O si gustas ver el analísis con los resultados del último año puedes visitar el [link](https://datafeast71.github.io/Happiness_2020/Happiness_2020.html). 
 
+```{r, message=FALSE, warning=FALSE}
+df <- read.csv("Happiness_years_PCA.csv", header = TRUE)
+
+df_2021 <- read.csv("../Data/1WHR2021C2.csv", header = TRUE) %>% 
+  select(Country.name:Ladder.score, Logged.GDP.per.capita:Perceptions.of.corruption, -Regional.indicator) %>% 
+  mutate(Continent = countrycode(sourcevar = Country.name,
+                                  origin = 'country.name',destination = 'continent')) %>% 
+  rename(Country=Country.name, Life.Ladder=Ladder.score, 
+         Log.GDP.per.capita = Logged.GDP.per.capita, Healthy.life.expectancy.at.birth = Healthy.life.expectancy) %>% 
+  mutate(Year = 2020)
+
+df_all <- bind_rows(df, df_2021)
+
+write.csv(df_all, "Happiness_years_PCA_2.csv", row.names = FALSE)
+```

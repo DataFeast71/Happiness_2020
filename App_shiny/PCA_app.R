@@ -20,7 +20,8 @@ df_rotation <- read.csv("Happiness_years_PCA_rotation.csv", header = TRUE)
 # 6                       Generosity -0.8767783 -3.9914615 2006
 
 ## Results from PC1 and PC2 by year
-df_pca <- read.csv("Happiness_years_PCA.csv", header = TRUE)
+#df_pca <- read.csv("Happiness_years_PCA.csv", header = TRUE)
+df_pca <- read.csv("Happiness_years_PCA_2.csv", header = TRUE)
 
 #############################################################
 #           User Interface
@@ -31,10 +32,12 @@ ui <- fluidPage(
   tags$head(HTML("<title>Happiness</title>")),
   navbarPage(
     #
-    title = div(img(
-      src = "https://raw.githubusercontent.com/DataFeast71/COVID19_plots/main/img/Logo_W.jpeg",
-      style = "margin-top: -14.5px; padding-right:10px;padding-bottom:10px", height = 60
-    )),
+    title = div(tags$a(href="https://www.facebook.com/An%C3%A1lisis-y-visualizaci%C3%B3n-de-datos-100602148375744", 
+                       target="_blank",
+                       img(
+                         src = "https://raw.githubusercontent.com/DataFeast71/COVID19_plots/main/img/Logo_W.jpeg",
+                         style = "margin-top: -14.5px; padding-right:10px;padding-bottom:10px", height = 60
+                       ))),
     tabPanel(
       title = "PCA Happiness",
       # Input values
@@ -43,7 +46,7 @@ ui <- fluidPage(
 
         selectInput("year",
           label = "Year:",
-          choices = unique(df_pca$Year),
+          choices = c(2006:2019),#unique(df_pca$Year),
           selected = "2017"
         ),
 
@@ -274,7 +277,8 @@ server <- function(input, output, session) {
         aes(x = Year, y = get(input$variable), group = Country, color = Country),
         show.legend = FALSE, alpha = 1.0, size = 1.2
       ) +
-      scale_x_continuous(limits = c(2005, 2021), expand = c(0, 0.4), breaks = c(2005:2019)) +
+      #scale_x_continuous(limits = c(2005, 2021), expand = c(0, 0.4), breaks = c(2005:2020)) +
+      scale_x_continuous(limits = c(min(df$Year), max(df$Year)+1), expand = c(0, 0.4), breaks = unique(df$Year)) +
       geom_label_repel(
         data = df %>% filter(SelectedCountry != "FALSE" & Year == max(Year)),
         aes(x = Year, y = get(input$variable), label = label),
